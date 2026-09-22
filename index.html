@@ -12,6 +12,7 @@
             --violet: #8b5cf6;
             --pink: #ff2e63;
             --gold: #ffd166;
+            --orange: #ff8a3d;
         }
 
         * {
@@ -129,6 +130,7 @@
         #scoreCard .value { color: #7ef1ff; text-shadow: 0 0 16px rgba(126, 241, 255, .55); }
         #levelCard .value { color: #c4b5fd; text-shadow: 0 0 16px rgba(196, 181, 253, .55); }
         #highCard  .value { color: #ffd166; text-shadow: 0 0 16px rgba(255, 209, 102, .5); }
+        #levelCard.p2 .value { color: #ffb066; text-shadow: 0 0 16px rgba(255, 176, 102, .55); }
 
         .stat.bump { animation: bump .45s ease; }
 
@@ -182,7 +184,8 @@
         }
 
         .panel {
-            padding: 26px 44px;
+            max-width: 100%;
+            padding: 26px 40px;
             text-align: center;
             border-radius: 20px;
             border: 1px solid rgba(255, 255, 255, .12);
@@ -226,6 +229,18 @@
             text-shadow: 0 0 22px rgba(255, 46, 99, .55);
         }
 
+        .panel h2.menu-title {
+            font-size: 1.7rem;
+            color: #7ef1ff;
+            text-shadow: 0 0 22px rgba(126, 241, 255, .5);
+        }
+
+        .menu-sub {
+            margin: 10px 0 20px;
+            font-size: .82rem;
+            color: var(--muted);
+        }
+
         .panel .final {
             margin: 12px 0 20px;
             font-size: 1rem;
@@ -246,7 +261,7 @@
 
         .btn {
             display: inline-block;
-            padding: 12px 36px;
+            padding: 12px 30px;
             border: none;
             border-radius: 999px;
             font-family: inherit;
@@ -289,6 +304,49 @@
             gap: 12px;
             justify-content: center;
             flex-wrap: wrap;
+        }
+
+        .keymap {
+            margin-top: 18px;
+            padding-top: 14px;
+            border-top: 1px solid rgba(255, 255, 255, .1);
+            font-size: .76rem;
+            line-height: 2.2;
+            color: var(--muted);
+        }
+
+        .dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            margin-right: 5px;
+            border-radius: 50%;
+            vertical-align: middle;
+        }
+
+        .dot.p1 { background: var(--cyan);   box-shadow: 0 0 10px rgba(34, 211, 238, .8); }
+        .dot.p2 { background: var(--orange); box-shadow: 0 0 10px rgba(255, 138, 61, .8); }
+
+        .duel-result {
+            margin: 14px 0 20px;
+        }
+
+        .duel-line {
+            margin: 6px 0;
+            font-size: 1.05rem;
+            color: var(--ink);
+        }
+
+        .duel-line b {
+            font-size: 1.35rem;
+            color: var(--gold);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .duel-line .cause {
+            margin-left: 6px;
+            font-size: .78rem;
+            color: var(--muted);
         }
 
         .controls {
@@ -342,33 +400,55 @@
     <main class="game-shell">
         <header>
             <h1 class="title">NEON SNAKE</h1>
-            <p class="subtitle">霓虹贪吃蛇 · 单文件纯前端实现，无需构建</p>
+            <p class="subtitle">霓虹贪吃蛇 · 单人挑战与双人对战</p>
         </header>
 
         <section class="stats">
-            <div class="stat" id="scoreCard"><span class="label">SCORE</span><span class="value" id="score">0</span></div>
-            <div class="stat" id="levelCard"><span class="label">LEVEL</span><span class="value" id="level">1</span></div>
-            <div class="stat" id="highCard"><span class="label">BEST</span><span class="value" id="highScore">0</span></div>
+            <div class="stat" id="scoreCard"><span class="label" id="label1">SCORE</span><span class="value" id="value1">0</span></div>
+            <div class="stat" id="levelCard"><span class="label" id="label2">LEVEL</span><span class="value" id="value2">1</span></div>
+            <div class="stat" id="highCard"><span class="label" id="label3">BEST</span><span class="value" id="value3">0</span></div>
         </section>
 
         <section class="board">
             <canvas id="gameCanvas" width="600" height="600"></canvas>
+
+            <div class="overlay show" id="startMenu">
+                <div class="panel">
+                    <h2 class="menu-title">选择模式</h2>
+                    <p class="menu-sub">一个人刷分，或者两个人共用一把键盘对战</p>
+                    <div class="panel-actions">
+                        <button class="btn" type="button" onclick="startSolo()">单人模式</button>
+                        <button class="btn ghost" type="button" onclick="startVersus()">双人对战</button>
+                    </div>
+                    <div class="keymap">
+                        <p><kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd> 或 <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 控制方向（单人）</p>
+                        <p><span class="dot p1"></span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 玩家 1 · <span class="dot p2"></span><kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd> 玩家 2</p>
+                    </div>
+                    <p class="tip">按 <kbd>1</kbd> 开始单人 · 按 <kbd>2</kbd> 开始对战</p>
+                </div>
+            </div>
+
             <div class="overlay" id="gameOver">
                 <div class="panel">
                     <span class="badge" id="recordBadge">NEW RECORD</span>
-                    <h2>GAME OVER</h2>
-                    <p class="final">本局得分 <span id="finalScore">0</span></p>
-                    <div class="panel-actions">
-                        <button class="btn" onclick="resetGame()">再来一局</button>
-                        <a class="btn ghost" href="scores.html">查看成绩记录</a>
+                    <h2 id="resultTitle">GAME OVER</h2>
+                    <p class="final" id="soloResult">本局得分 <span id="finalScore">0</span></p>
+                    <div class="duel-result" id="versusResult" hidden>
+                        <p class="duel-line"><span class="dot p1"></span>玩家 1 <b id="p1Score">0</b> 分<span class="cause" id="p1Cause"></span></p>
+                        <p class="duel-line"><span class="dot p2"></span>玩家 2 <b id="p2Score">0</b> 分<span class="cause" id="p2Cause"></span></p>
                     </div>
-                    <p class="tip">或按 <kbd>Enter</kbd> 快速重开</p>
+                    <div class="panel-actions">
+                        <button class="btn" type="button" onclick="restartRound()">再来一局</button>
+                        <a class="btn ghost" href="scores.html">查看成绩记录</a>
+                        <button class="btn ghost" type="button" onclick="showMenu()">换个模式</button>
+                    </div>
+                    <p class="tip">按 <kbd>Enter</kbd> 再来一局 · 按 <kbd>Esc</kbd> 回到模式选择</p>
                 </div>
             </div>
         </section>
 
         <p class="controls">
-            <kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd> 或 <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 控制方向
+            <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 玩家 1 · <kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd> 玩家 2 · <kbd>Esc</kbd> 回到模式选择
             <span class="sep">·</span>
             <a href="scores.html">查看成绩记录 →</a>
         </p>
@@ -380,24 +460,53 @@
 
             const canvas = document.getElementById('gameCanvas');
             const ctx = canvas.getContext('2d');
-            const scoreElement = document.getElementById('score');
-            const scoreCard = document.getElementById('scoreCard');
-            const levelElement = document.getElementById('level');
-            const levelCard = document.getElementById('levelCard');
-            const highScoreElement = document.getElementById('highScore');
-            const highCard = document.getElementById('highCard');
-            const gameOverElement = document.getElementById('gameOver');
-            const finalScoreElement = document.getElementById('finalScore');
+            const startMenu = document.getElementById('startMenu');
+            const gameOver = document.getElementById('gameOver');
             const recordBadge = document.getElementById('recordBadge');
+            const resultTitle = document.getElementById('resultTitle');
+            const soloResult = document.getElementById('soloResult');
+            const finalScore = document.getElementById('finalScore');
+            const versusResult = document.getElementById('versusResult');
+            const p1Score = document.getElementById('p1Score');
+            const p2Score = document.getElementById('p2Score');
+            const p1Cause = document.getElementById('p1Cause');
+            const p2Cause = document.getElementById('p2Cause');
+            const scoreCard = document.getElementById('scoreCard');
+            const levelCard = document.getElementById('levelCard');
+            const highCard = document.getElementById('highCard');
+            const label1 = document.getElementById('label1');
+            const label2 = document.getElementById('label2');
+            const label3 = document.getElementById('label3');
+            const value1 = document.getElementById('value1');
+            const value2 = document.getElementById('value2');
+            const value3 = document.getElementById('value3');
 
             /* ---------------- 基础参数 ---------------- */
             const SIZE = 600;                    // 逻辑画布边长（CSS 像素）
             const gridSize = 30;                 // 每格像素
             const tileCount = SIZE / gridSize;   // 20 × 20 格
-            const START_SPEED = 130;             // 每步毫秒数，越小越快
+            const START_SPEED = 130;             // 单人模式每步毫秒数，越小越快
             const MIN_SPEED = 65;
             const SPEED_STEP = 11;
             const LEVEL_STEP = 50;               // 每 50 分升一级
+            const VERSUS_SPEED = 120;            // 对战模式固定速度，保证公平
+            const FOOD_HUES = [45, 150, 285];    // 多个食物用不同色相区分
+            const RECORDS_KEY = 'snakeRecords';
+            const HIGH_SCORE_KEY = 'snakeHighScore';
+            const MAX_RECORDS = 100;             // 只保留最近 100 场
+            const CAUSE_TEXT = {
+                wall: '撞墙',
+                self: '咬到自己',
+                other: '撞到对手',
+                'head-on': '正面相撞'
+            };
+
+            // 每条蛇自己的配色，颜色沿身体流动
+            const PALETTES = {
+                solo: { hue: 186, spread: 150, glow: 'rgba(255,120,190,0.95)', head: ['#ffffff', '#ff9ad8', '#ff2e9a'] },
+                p1:   { hue: 172, spread: 58,  glow: 'rgba(70,215,255,0.95)',  head: ['#ffffff', '#7ef1ff', '#17b6d8'] },
+                p2:   { hue: 18,  spread: 52,  glow: 'rgba(255,150,70,0.95)',  head: ['#ffffff', '#ffc46b', '#ff5a2e'] }
+            };
 
             // 高分屏按设备像素比放大，画面更清晰
             const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -406,25 +515,23 @@
             ctx.scale(dpr, dpr);
 
             /* ---------------- 游戏状态 ---------------- */
-            let snake = [];
-            let prevSnake = [];      // 上一步的位置，用来插值出顺滑移动
-            let food = { x: 13, y: 10 };
-            let dx = 1, dy = 0, nextDx = 1, nextDy = 0;
-            let score = 0;
-            let level = 1;
+            let phase = 'menu';          // menu / playing / over
+            let mode = 'solo';           // solo / versus
+            let snakes = [];
+            let foods = [];
             let speed = START_SPEED;
-            let highScore = Number(localStorage.getItem('snakeHighScore') || 0) || 0;
-            let bestAtStart = highScore;
-            let gameRunning = true;
-            let stepProgress = 0;
+            let soloLevel = 1;
+            let stepProgress = 1;
             let lastFrame = 0;
             let animTime = 0;
             let shake = 0;
             let particles = [];
             let rings = [];
             let floaters = [];
-
-            highScoreElement.textContent = highScore;
+            let startedAt = 0;
+            let clockSecond = -1;
+            let highScore = readHighScore();
+            let bestAtStart = highScore;
 
             /* ---------------- 小工具 ---------------- */
             function unit(x, y) {
@@ -443,6 +550,346 @@
                     x: cell.x * gridSize + gridSize / 2,
                     y: cell.y * gridSize + gridSize / 2
                 };
+            }
+
+            function formatClock(seconds) {
+                const m = Math.floor(seconds / 60);
+                const s = seconds % 60;
+                return m + ':' + (s < 10 ? '0' + s : s);
+            }
+
+            function readHighScore() {
+                try {
+                    return Number(localStorage.getItem(HIGH_SCORE_KEY) || 0) || 0;
+                } catch (e) {
+                    return 0;
+                }
+            }
+
+            function writeHighScore(value) {
+                try {
+                    localStorage.setItem(HIGH_SCORE_KEY, value);
+                } catch (e) { /* 隐私模式下写不进去也无所谓 */ }
+            }
+
+            function loadRecords() {
+                try {
+                    const raw = localStorage.getItem(RECORDS_KEY);
+                    const list = raw ? JSON.parse(raw) : [];
+                    return Array.isArray(list) ? list : [];
+                } catch (e) {
+                    return [];
+                }
+            }
+
+            function saveRecord(record) {
+                try {
+                    const list = loadRecords();
+                    list.push(record);
+                    localStorage.setItem(RECORDS_KEY, JSON.stringify(list.slice(-MAX_RECORDS)));
+                } catch (e) { /* 存储满了就静默跳过，不影响游戏 */ }
+            }
+
+            /* ---------------- 计分板 ---------------- */
+            function updateHud() {
+                if (mode === 'versus') {
+                    label1.textContent = '玩家 1';
+                    label2.textContent = '玩家 2';
+                    label3.textContent = '时长';
+                    value1.textContent = snakes[0] ? snakes[0].score : 0;
+                    value2.textContent = snakes[1] ? snakes[1].score : 0;
+                    value3.textContent = elapsedText();
+                    levelCard.classList.add('p2');
+                } else {
+                    label1.textContent = 'SCORE';
+                    label2.textContent = 'LEVEL';
+                    label3.textContent = 'BEST';
+                    value1.textContent = snakes[0] ? snakes[0].score : 0;
+                    value2.textContent = soloLevel;
+                    value3.textContent = highScore;
+                    levelCard.classList.remove('p2');
+                }
+            }
+
+            function elapsedText() {
+                if (phase !== 'playing') return value3.dataset.lastClock || '0:00';
+                return formatClock(Math.max(0, Math.floor((Date.now() - startedAt) / 1000)));
+            }
+
+            /* ---------------- 棋盘元素 ---------------- */
+            function makeSnake(name, cells, dir, palette) {
+                return {
+                    name: name,
+                    palette: palette,
+                    cells: cells.map(c => ({ x: c.x, y: c.y })),
+                    prev: cells.map(c => ({ x: c.x, y: c.y })),
+                    dir: { x: dir.x, y: dir.y },
+                    next: { x: dir.x, y: dir.y },
+                    alive: true,
+                    cause: '',
+                    score: 0
+                };
+            }
+
+            function occupiedCells() {
+                const occupied = new Set();
+                snakes.forEach(s => s.cells.forEach(c => occupied.add(c.x + ',' + c.y)));
+                foods.forEach(f => occupied.add(f.x + ',' + f.y));
+                return occupied;
+            }
+
+            function freeCells() {
+                const occupied = occupiedCells();
+                const free = [];
+                for (let x = 0; x < tileCount; x++) {
+                    for (let y = 0; y < tileCount; y++) {
+                        if (!occupied.has(x + ',' + y)) free.push({ x: x, y: y });
+                    }
+                }
+                return free;
+            }
+
+            function addFood(index) {
+                const free = freeCells();
+                if (!free.length) return;
+                const pick = free[Math.floor(Math.random() * free.length)];
+                foods.push({ x: pick.x, y: pick.y, hue: FOOD_HUES[index % FOOD_HUES.length] });
+            }
+
+            function setupFoods(count) {
+                foods = [];
+                for (let i = 0; i < count; i++) addFood(i);
+            }
+
+            /* ---------------- 回合控制 ---------------- */
+            function startRound(nextMode) {
+                mode = nextMode;
+                phase = 'playing';
+                startedAt = Date.now();
+                clockSecond = -1;
+                stepProgress = 0;
+                shake = 0;
+                particles = [];
+                rings = [];
+                floaters = [];
+                bestAtStart = highScore;
+                soloLevel = 1;
+
+                if (mode === 'versus') {
+                    snakes = [
+                        makeSnake('玩家 1', [{ x: 6, y: 10 }, { x: 5, y: 10 }, { x: 4, y: 10 }], { x: 1, y: 0 }, PALETTES.p1),
+                        makeSnake('玩家 2', [{ x: 13, y: 10 }, { x: 14, y: 10 }, { x: 15, y: 10 }], { x: -1, y: 0 }, PALETTES.p2)
+                    ];
+                    speed = VERSUS_SPEED;
+                    setupFoods(3);
+                } else {
+                    snakes = [makeSnake('玩家', [{ x: 10, y: 10 }, { x: 9, y: 10 }, { x: 8, y: 10 }], { x: 1, y: 0 }, PALETTES.solo)];
+                    speed = START_SPEED;
+                    setupFoods(1);
+                }
+
+                value3.dataset.lastClock = '0:00';
+                startMenu.classList.remove('show');
+                gameOver.classList.remove('show');
+                recordBadge.classList.remove('show');
+                updateHud();
+            }
+
+            function startSolo() { startRound('solo'); }
+            function startVersus() { startRound('versus'); }
+            function restartRound() { startRound(mode); }
+
+            function showMenu() {
+                phase = 'menu';
+                stepProgress = 1;
+                snakes = [];
+                setupFoods(2);
+                startMenu.classList.add('show');
+                gameOver.classList.remove('show');
+                updateHud();
+            }
+
+            /* ---------------- 输入 ---------------- */
+            function setDirection(snake, dir) {
+                if (!snake || !snake.alive) return;
+                // 不允许 180° 掉头（以这一步实际行进的方向为准）
+                if (snake.dir.x === -dir.x && snake.dir.y === -dir.y) return;
+                snake.next = { x: dir.x, y: dir.y };
+            }
+
+            function tickClock() {
+                const elapsed = Math.max(0, Math.floor((Date.now() - startedAt) / 1000));
+                if (elapsed === clockSecond) return;
+                clockSecond = elapsed;
+                const text = formatClock(elapsed);
+                value3.dataset.lastClock = text;
+                if (mode === 'versus') value3.textContent = text;
+            }
+
+            /* ---------------- 每步推进 ---------------- */
+            // 两条蛇在同一拍里移动，所以先把所有新头算出来再统一判定碰撞
+            function stepRound() {
+                const active = snakes.filter(s => s.alive);
+                if (!active.length) { endRound(); return; }
+
+                // 记录上一步位置，用于插值出顺滑移动
+                active.forEach(s => { s.prev = s.cells.map(c => ({ x: c.x, y: c.y })); });
+
+                const heads = new Map();
+                active.forEach(s => {
+                    s.dir = { x: s.next.x, y: s.next.y };
+                    heads.set(s, { x: s.cells[0].x + s.dir.x, y: s.cells[0].y + s.dir.y });
+                });
+
+                // 这一拍会吃到食物的蛇，尾巴保留
+                const willEat = new Set();
+                active.forEach(s => {
+                    const head = heads.get(s);
+                    if (foods.some(f => f.x === head.x && f.y === head.y)) willEat.add(s);
+                });
+
+                // 仍然被占用的格子：会移开的尾巴不算障碍
+                const blocked = new Map();
+                snakes.forEach(s => {
+                    const keep = s.alive ? (willEat.has(s) ? s.cells.length : s.cells.length - 1) : s.cells.length;
+                    for (let i = 0; i < keep; i++) {
+                        blocked.set(s.cells[i].x + ',' + s.cells[i].y, s);
+                    }
+                });
+                // 头也会在下一拍离开，所以头格不算障碍（换位相撞另行判定）
+                active.forEach(s => blocked.delete(s.cells[0].x + ',' + s.cells[0].y));
+
+                const deaths = new Map();
+                active.forEach(s => {
+                    const head = heads.get(s);
+                    if (head.x < 0 || head.x >= tileCount || head.y < 0 || head.y >= tileCount) {
+                        deaths.set(s, 'wall');
+                        return;
+                    }
+                    const owner = blocked.get(head.x + ',' + head.y);
+                    if (owner) deaths.set(s, owner === s ? 'self' : 'other');
+                });
+
+                // 两个头抢同一格，或者面对面换位，都算正面相撞
+                for (let i = 0; i < active.length; i++) {
+                    for (let j = i + 1; j < active.length; j++) {
+                        const a = active[i];
+                        const b = active[j];
+                        const ha = heads.get(a);
+                        const hb = heads.get(b);
+                        const sameTarget = ha.x === hb.x && ha.y === hb.y;
+                        const swapped = ha.x === b.cells[0].x && ha.y === b.cells[0].y &&
+                                        hb.x === a.cells[0].x && hb.y === a.cells[0].y;
+                        if (sameTarget || swapped) {
+                            if (!deaths.has(a)) deaths.set(a, 'head-on');
+                            if (!deaths.has(b)) deaths.set(b, 'head-on');
+                        }
+                    }
+                }
+
+                deaths.forEach((cause, snake) => killSnake(snake, cause));
+
+                active.forEach(s => {
+                    if (!s.alive) return;
+                    const head = heads.get(s);
+                    s.cells.unshift(head);
+                    const index = foods.findIndex(f => f.x === head.x && f.y === head.y);
+                    if (index >= 0) {
+                        const eaten = foods.splice(index, 1)[0];
+                        s.score += 10;
+                        onEat(s, eaten);
+                    } else {
+                        s.cells.pop();
+                    }
+                });
+
+                updateHud();
+                if (snakes.some(s => !s.alive)) endRound();
+            }
+
+            function onEat(snake, food) {
+                const pos = cellCenter(food);
+                floaters.push({ x: pos.x, y: pos.y, text: '+10', life: 1, hue: food.hue });
+                rings.push({ x: pos.x, y: pos.y, r: gridSize * 0.4, maxR: gridSize * 2.6, life: 1, hue: food.hue });
+                spawnBurst(pos, 20, food.hue);
+
+                if (mode === 'solo') {
+                    if (snake.score > highScore) {
+                        highScore = snake.score;
+                        writeHighScore(highScore);
+                        bump(highCard);
+                    }
+                    const nextLevel = 1 + Math.floor(snake.score / LEVEL_STEP);
+                    if (nextLevel !== soloLevel) {
+                        soloLevel = nextLevel;
+                        bump(levelCard);
+                        const center = { x: SIZE / 2, y: SIZE / 2 };
+                        floaters.push({ x: center.x, y: center.y, text: 'LEVEL ' + soloLevel, life: 1.35, hue: 285 });
+                        rings.push({ x: center.x, y: center.y, r: gridSize, maxR: SIZE * 0.7, life: 1, hue: 285 });
+                    }
+                    speed = Math.max(MIN_SPEED, START_SPEED - (soloLevel - 1) * SPEED_STEP);
+                }
+
+                bump(snake === snakes[0] ? scoreCard : levelCard);
+                addFood(foods.length);
+            }
+
+            function killSnake(snake, cause) {
+                snake.alive = false;
+                snake.cause = cause;
+                shake = Math.max(shake, 16);
+                snake.cells.forEach((cell, index) => {
+                    spawnBurst(cellCenter(cell), 7, (snake.palette.hue + index * 12) % 360);
+                });
+            }
+
+            function endRound() {
+                phase = 'over';
+                stepProgress = 1;
+                const duration = Math.max(1, Math.round((Date.now() - startedAt) / 1000));
+
+                if (mode === 'solo') {
+                    const snake = snakes[0];
+                    saveRecord({
+                        v: 1,
+                        mode: 'solo',
+                        endedAt: Date.now(),
+                        duration: duration,
+                        score: snake.score,
+                        level: soloLevel,
+                        length: snake.cells.length
+                    });
+                    finalScore.textContent = snake.score;
+                    soloResult.hidden = false;
+                    versusResult.hidden = true;
+                    resultTitle.textContent = 'GAME OVER';
+                    if (snake.score > 0 && snake.score >= bestAtStart) recordBadge.classList.add('show');
+                } else {
+                    const a = snakes[0];
+                    const b = snakes[1];
+                    const winner = (!a.alive && !b.alive) ? 0 : (a.alive ? 1 : 2);
+                    saveRecord({
+                        v: 1,
+                        mode: 'versus',
+                        endedAt: Date.now(),
+                        duration: duration,
+                        winner: winner,
+                        players: [
+                            { score: a.score, length: a.cells.length, cause: a.cause },
+                            { score: b.score, length: b.cells.length, cause: b.cause }
+                        ]
+                    });
+                    p1Score.textContent = a.score;
+                    p2Score.textContent = b.score;
+                    p1Cause.textContent = a.cause ? '（' + CAUSE_TEXT[a.cause] + '）' : '';
+                    p2Cause.textContent = b.cause ? '（' + CAUSE_TEXT[b.cause] + '）' : '';
+                    soloResult.hidden = true;
+                    versusResult.hidden = false;
+                    resultTitle.textContent = winner === 0 ? '平局' : (winner === 1 ? '玩家 1 获胜' : '玩家 2 获胜');
+                }
+
+                updateHud();
+                gameOver.classList.add('show');
             }
 
             /* ---------------- 特效 ---------------- */
@@ -497,122 +944,6 @@
                 });
             }
 
-            /* ---------------- 玩法逻辑 ---------------- */
-            function update() {
-                dx = nextDx;
-                dy = nextDy;
-
-                const head = { x: snake[0].x + dx, y: snake[0].y + dy };
-
-                // 撞墙
-                if (head.x < 0 || head.x >= tileCount || head.y < 0 || head.y >= tileCount) {
-                    die();
-                    return;
-                }
-
-                // 撞到自己（尾巴这一步会移开，所以最后一节不算）
-                for (let i = 0; i < snake.length - 1; i++) {
-                    if (head.x === snake[i].x && head.y === snake[i].y) {
-                        die();
-                        return;
-                    }
-                }
-
-                prevSnake = snake.map(s => ({ x: s.x, y: s.y }));
-                snake.unshift(head);
-
-                if (head.x === food.x && head.y === food.y) {
-                    eat();
-                } else {
-                    snake.pop();
-                }
-            }
-
-            function eat() {
-                score += 10;
-                scoreElement.textContent = score;
-                bump(scoreCard);
-
-                const pos = cellCenter(food);
-                floaters.push({ x: pos.x, y: pos.y, text: '+10', life: 1, hue: 45 });
-                rings.push({ x: pos.x, y: pos.y, r: gridSize * 0.4, maxR: gridSize * 2.6, life: 1, hue: 45 });
-                spawnBurst(pos, 20, 38);
-
-                if (score > highScore) {
-                    highScore = score;
-                    highScoreElement.textContent = highScore;
-                    localStorage.setItem('snakeHighScore', highScore);
-                    bump(highCard);
-                }
-
-                const nextLevel = 1 + Math.floor(score / LEVEL_STEP);
-                if (nextLevel !== level) {
-                    level = nextLevel;
-                    levelElement.textContent = level;
-                    bump(levelCard);
-                    const center = { x: SIZE / 2, y: SIZE / 2 };
-                    floaters.push({ x: center.x, y: center.y, text: 'LEVEL ' + level, life: 1.35, hue: 285 });
-                    rings.push({ x: center.x, y: center.y, r: gridSize, maxR: SIZE * 0.7, life: 1, hue: 285 });
-                }
-
-                speed = Math.max(MIN_SPEED, START_SPEED - (level - 1) * SPEED_STEP);
-                placeFood();
-            }
-
-            function placeFood() {
-                const occupied = new Set(snake.map(s => s.x + ',' + s.y));
-                const free = [];
-                for (let x = 0; x < tileCount; x++) {
-                    for (let y = 0; y < tileCount; y++) {
-                        if (!occupied.has(x + ',' + y)) free.push({ x: x, y: y });
-                    }
-                }
-                if (!free.length) return;   // 整屏占满时保持原位
-                const pick = free[Math.floor(Math.random() * free.length)];
-                food = { x: pick.x, y: pick.y };
-            }
-
-            function die() {
-                gameRunning = false;
-                shake = 18;
-                prevSnake = snake.map(s => ({ x: s.x, y: s.y }));
-                stepProgress = 1;
-
-                snake.forEach((seg, index) => {
-                    spawnBurst(cellCenter(seg), 8, (200 + index * 14) % 360);
-                });
-
-                finalScoreElement.textContent = score;
-                if (score > 0 && score >= bestAtStart) {
-                    recordBadge.classList.add('show');
-                }
-                gameOverElement.classList.add('show');
-            }
-
-            function resetGame() {
-                snake = [{ x: 10, y: 10 }, { x: 9, y: 10 }, { x: 8, y: 10 }];
-                prevSnake = snake.map(s => ({ x: s.x, y: s.y }));
-                dx = 1; dy = 0; nextDx = 1; nextDy = 0;
-                score = 0;
-                level = 1;
-                speed = START_SPEED;
-                stepProgress = 0;
-                shake = 0;
-                particles = [];
-                rings = [];
-                floaters = [];
-                gameRunning = true;
-                bestAtStart = highScore;
-
-                scoreElement.textContent = '0';
-                levelElement.textContent = '1';
-                gameOverElement.classList.remove('show');
-                recordBadge.classList.remove('show');
-                placeFood();
-            }
-
-            window.resetGame = resetGame;   // 按钮的 onclick 需要全局函数
-
             /* ---------------- 绘制 ---------------- */
             function drawBackground() {
                 const gradient = ctx.createLinearGradient(0, 0, SIZE, SIZE);
@@ -664,14 +995,13 @@
                 ctx.fillRect(0, bandY - 90, SIZE, 180);
             }
 
-            // 用插值算出每节身体此刻的屏幕坐标，让移动连续顺滑
-            function snakePoints(t) {
+            function snakePoints(snake, t) {
                 const points = [];
-                for (let i = 0; i < snake.length; i++) {
-                    const current = snake[i];
-                    const previous = i < prevSnake.length
-                        ? prevSnake[i]
-                        : prevSnake[prevSnake.length - 1] || current;
+                for (let i = 0; i < snake.cells.length; i++) {
+                    const current = snake.cells[i];
+                    const previous = i < snake.prev.length
+                        ? snake.prev[i]
+                        : snake.prev[snake.prev.length - 1] || current;
                     points.push({
                         x: (previous.x + (current.x - previous.x) * t) * gridSize + gridSize / 2,
                         y: (previous.y + (current.y - previous.y) * t) * gridSize + gridSize / 2
@@ -680,10 +1010,13 @@
                 return points;
             }
 
-            function drawSnake(t) {
-                const points = snakePoints(t);
+            function drawSnake(snake, t) {
+                const points = snakePoints(snake, t);
                 const total = points.length;
+                const palette = snake.palette;
 
+                ctx.save();
+                if (!snake.alive) ctx.globalAlpha = 0.3;
                 ctx.lineCap = 'round';
                 ctx.lineJoin = 'round';
 
@@ -692,12 +1025,12 @@
                     const from = points[i];
                     const to = points[i - 1];
                     const toHead = 1 - (i - 0.5) / Math.max(total - 1, 1);
-                    const hue = (186 + toHead * 150 + animTime * 36) % 360;
+                    const hue = (palette.hue + toHead * palette.spread + animTime * 36) % 360;
                     const light = 51 + 9 * Math.sin(animTime * 3.2 + i * 0.55);
 
                     ctx.strokeStyle = 'hsla(' + hue + ', 92%, ' + light + '%, 0.96)';
                     ctx.shadowColor = 'hsla(' + hue + ', 100%, 62%, 0.9)';
-                    ctx.shadowBlur = 16;
+                    ctx.shadowBlur = snake.alive ? 16 : 0;
                     ctx.lineWidth = gridSize * (0.40 + 0.26 * toHead);
                     ctx.beginPath();
                     ctx.moveTo(from.x, from.y);
@@ -716,27 +1049,32 @@
                 }
                 ctx.stroke();
 
-                drawHead(points);
+                drawHead(points, snake);
+                ctx.restore();
             }
 
-            function drawHead(points) {
+            function drawHead(points, snake) {
                 const head = points[0];
-                const behind = points[1] || { x: head.x - dx * gridSize, y: head.y - dy * gridSize };
+                const behind = points[1] || {
+                    x: head.x - snake.dir.x * gridSize,
+                    y: head.y - snake.dir.y * gridSize
+                };
                 const dir = unit(head.x - behind.x, head.y - behind.y);
                 const side = { x: -dir.y, y: dir.x };
                 const pulse = 1 + 0.05 * Math.sin(animTime * 7);
                 const radius = gridSize * 0.47 * pulse;
+                const head3 = snake.palette.head;
 
                 ctx.save();
-                ctx.shadowColor = 'rgba(255,120,190,0.95)';
-                ctx.shadowBlur = 28;
+                ctx.shadowColor = snake.palette.glow;
+                ctx.shadowBlur = snake.alive ? 28 : 0;
                 const glow = ctx.createRadialGradient(
                     head.x - radius * 0.3, head.y - radius * 0.35, radius * 0.12,
                     head.x, head.y, radius
                 );
-                glow.addColorStop(0, '#ffffff');
-                glow.addColorStop(0.35, '#ff9ad8');
-                glow.addColorStop(1, '#ff2e9a');
+                glow.addColorStop(0, head3[0]);
+                glow.addColorStop(0.35, head3[1]);
+                glow.addColorStop(1, head3[2]);
                 ctx.fillStyle = glow;
                 ctx.beginPath();
                 ctx.arc(head.x, head.y, radius, 0, Math.PI * 2);
@@ -765,17 +1103,18 @@
                 }
             }
 
-            function drawFood() {
+            function drawFood(food) {
                 const center = cellCenter(food);
-                const pulse = 1 + 0.12 * Math.sin(animTime * 5.5);
+                const hue = food.hue;
+                const pulse = 1 + 0.12 * Math.sin(animTime * 5.5 + hue);
                 const radius = gridSize * 0.36 * pulse;
 
                 // 旋转的虚线光环
                 ctx.save();
                 ctx.translate(center.x, center.y);
-                ctx.rotate(animTime * 1.2);
+                ctx.rotate(animTime * 1.2 + hue);
                 ctx.setLineDash([5, 7]);
-                ctx.strokeStyle = 'rgba(255,214,102,0.6)';
+                ctx.strokeStyle = 'hsla(' + hue + ', 100%, 72%, 0.6)';
                 ctx.lineWidth = 2;
                 ctx.beginPath();
                 ctx.arc(0, 0, gridSize * 0.72, 0, Math.PI * 2);
@@ -784,16 +1123,16 @@
 
                 // 果实本体：多层径向渐变 + 外发光
                 ctx.save();
-                ctx.shadowColor = 'rgba(255,150,60,0.95)';
+                ctx.shadowColor = 'hsla(' + hue + ', 100%, 60%, 0.95)';
                 ctx.shadowBlur = 26;
                 const body = ctx.createRadialGradient(
                     center.x - radius * 0.35, center.y - radius * 0.4, radius * 0.1,
                     center.x, center.y, radius
                 );
-                body.addColorStop(0, '#fffbe8');
-                body.addColorStop(0.35, '#ffd166');
-                body.addColorStop(0.75, '#ff7a45');
-                body.addColorStop(1, '#ff2e63');
+                body.addColorStop(0, 'hsl(' + hue + ', 100%, 96%)');
+                body.addColorStop(0.35, 'hsl(' + hue + ', 95%, 72%)');
+                body.addColorStop(0.75, 'hsl(' + ((hue + 18) % 360) + ', 95%, 58%)');
+                body.addColorStop(1, 'hsl(' + ((hue + 36) % 360) + ', 90%, 50%)');
                 ctx.fillStyle = body;
                 ctx.beginPath();
                 ctx.arc(center.x, center.y, radius, 0, Math.PI * 2);
@@ -809,7 +1148,7 @@
                 // 叶子
                 ctx.save();
                 ctx.translate(center.x, center.y - radius * 0.92);
-                ctx.rotate(Math.sin(animTime * 2) * 0.25 - 0.4);
+                ctx.rotate(Math.sin(animTime * 2 + hue) * 0.25 - 0.4);
                 ctx.fillStyle = '#7ef29d';
                 ctx.beginPath();
                 ctx.ellipse(0, 0, gridSize * 0.17, gridSize * 0.075, 0, 0, Math.PI * 2);
@@ -818,11 +1157,11 @@
 
                 // 环绕的小亮点
                 for (let i = 0; i < 3; i++) {
-                    const angle = animTime * 2 + i * Math.PI * 2 / 3;
+                    const angle = animTime * 2 + i * Math.PI * 2 / 3 + hue;
                     const sx = center.x + Math.cos(angle) * gridSize * 0.92;
                     const sy = center.y + Math.sin(angle) * gridSize * 0.5;
                     const alpha = 0.3 + 0.7 * Math.abs(Math.sin(animTime * 3 + i));
-                    ctx.fillStyle = 'rgba(255,240,180,' + alpha + ')';
+                    ctx.fillStyle = 'hsla(' + hue + ', 100%, 92%, ' + alpha + ')';
                     ctx.beginPath();
                     ctx.arc(sx, sy, 1.9, 0, Math.PI * 2);
                     ctx.fill();
@@ -872,8 +1211,8 @@
                     ctx.translate((Math.random() - 0.5) * shake, (Math.random() - 0.5) * shake);
                 }
                 drawEffects();
-                drawSnake(t);
-                drawFood();
+                snakes.forEach(snake => drawSnake(snake, t));
+                foods.forEach(food => drawFood(food));
                 ctx.restore();
             }
 
@@ -885,56 +1224,70 @@
 
                 updateEffects(dt);
 
-                if (gameRunning) {
+                if (phase === 'playing') {
+                    tickClock();
                     stepProgress += dt / speed;
-                    while (stepProgress >= 1 && gameRunning) {
+                    while (stepProgress >= 1 && phase === 'playing') {
                         stepProgress -= 1;
-                        update();
+                        stepRound();
                     }
                 }
 
-                render(gameRunning ? stepProgress : 1);
+                render(phase === 'playing' ? stepProgress : 1);
                 requestAnimationFrame(gameLoop);
             }
 
+            /* ---------------- 键盘 ---------------- */
+            const DIRS = {
+                ArrowUp: { x: 0, y: -1 },
+                ArrowDown: { x: 0, y: 1 },
+                ArrowLeft: { x: -1, y: 0 },
+                ArrowRight: { x: 1, y: 0 },
+                w: { x: 0, y: -1 },
+                s: { x: 0, y: 1 },
+                a: { x: -1, y: 0 },
+                d: { x: 1, y: 0 }
+            };
+
             document.addEventListener('keydown', e => {
-                if (!gameRunning) {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                        resetGame();
-                        e.preventDefault();
-                    }
+                const key = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+
+                if (phase === 'menu') {
+                    if (key === '1' || key === 'Enter' || key === ' ') { startSolo(); e.preventDefault(); }
+                    else if (key === '2') { startVersus(); e.preventDefault(); }
                     return;
                 }
 
-                switch (e.key) {
-                    case 'ArrowUp':
-                    case 'w':
-                    case 'W':
-                        if (dy !== 1) { nextDx = 0; nextDy = -1; }
-                        e.preventDefault();
-                        break;
-                    case 'ArrowDown':
-                    case 's':
-                    case 'S':
-                        if (dy !== -1) { nextDx = 0; nextDy = 1; }
-                        e.preventDefault();
-                        break;
-                    case 'ArrowLeft':
-                    case 'a':
-                    case 'A':
-                        if (dx !== 1) { nextDx = -1; nextDy = 0; }
-                        e.preventDefault();
-                        break;
-                    case 'ArrowRight':
-                    case 'd':
-                    case 'D':
-                        if (dx !== -1) { nextDx = 1; nextDy = 0; }
-                        e.preventDefault();
-                        break;
+                if (phase === 'over') {
+                    if (key === 'Enter' || key === ' ') { restartRound(); e.preventDefault(); }
+                    else if (key === '1') { startSolo(); e.preventDefault(); }
+                    else if (key === '2') { startVersus(); e.preventDefault(); }
+                    else if (key === 'Escape') { showMenu(); e.preventDefault(); }
+                    return;
+                }
+
+                if (key === 'Escape') { showMenu(); e.preventDefault(); return; }
+
+                const dir = DIRS[key];
+                if (!dir) return;
+                e.preventDefault();
+
+                if (mode === 'versus') {
+                    // WASD 归玩家 1，方向键归玩家 2
+                    const isArrow = key.startsWith('Arrow');
+                    setDirection(snakes[isArrow ? 1 : 0], dir);
+                } else {
+                    setDirection(snakes[0], dir);
                 }
             });
 
-            resetGame();
+            /* ---------------- 启动 ---------------- */
+            window.startSolo = startSolo;
+            window.startVersus = startVersus;
+            window.restartRound = restartRound;
+            window.showMenu = showMenu;
+
+            showMenu();
             requestAnimationFrame(gameLoop);
         })();
     </script>
