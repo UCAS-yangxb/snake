@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snake · 成绩记录</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            color: #f0f0f0;
+            font-family: 'Courier New', Courier, monospace;
+            background: radial-gradient(circle at 50% 0%, #23233f 0%, #1a1a2e 55%, #12121f 100%);
+        }
+
+        .card {
+            width: 100%;
+            max-width: 460px;
+            padding: 32px 28px;
+            text-align: center;
+            border: 1px solid rgba(233, 69, 96, .35);
+            border-radius: 14px;
+            background: rgba(15, 15, 26, .75);
+            box-shadow: 0 24px 60px rgba(0, 0, 0, .5);
+        }
+
+        h1 {
+            font-size: 1.6rem;
+            letter-spacing: 3px;
+            color: #e94560;
+        }
+
+        .sub {
+            margin-top: 10px;
+            font-size: .82rem;
+            line-height: 1.7;
+            color: #9a9ab5;
+        }
+
+        .score {
+            margin: 26px 0 10px;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(78, 204, 163, .25);
+            background: rgba(78, 204, 163, .08);
+        }
+
+        .score .label {
+            display: block;
+            font-size: .72rem;
+            letter-spacing: 3px;
+            color: #9a9ab5;
+        }
+
+        .score .value {
+            display: block;
+            margin-top: 6px;
+            font-size: 2.6rem;
+            font-weight: 700;
+            color: #4ecca3;
+            text-shadow: 0 0 18px rgba(78, 204, 163, .45);
+        }
+
+        .score.empty .value {
+            font-size: 1.4rem;
+            color: #6f6f8f;
+            text-shadow: none;
+        }
+
+        .meta {
+            font-size: .78rem;
+            color: #9a9ab5;
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 24px 0 6px;
+        }
+
+        .btn {
+            padding: 10px 22px;
+            border: 1px solid transparent;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: .9rem;
+            text-decoration: none;
+            cursor: pointer;
+            transition: background-color .2s, border-color .2s, transform .15s;
+        }
+
+        .btn.primary {
+            background: #e94560;
+            color: #fff;
+        }
+
+        .btn.primary:hover {
+            background: #ff6b81;
+            transform: translateY(-1px);
+        }
+
+        .btn.ghost {
+            border-color: rgba(255, 255, 255, .2);
+            background: transparent;
+            color: #d7d7e6;
+        }
+
+        .btn.ghost:hover {
+            border-color: #e94560;
+            color: #fff;
+        }
+
+        .btn:disabled {
+            opacity: .45;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .hint {
+            margin-top: 18px;
+            font-size: .72rem;
+            line-height: 1.7;
+            color: #6f6f8f;
+        }
+
+        code {
+            color: #c9c9e0;
+        }
+    </style>
+</head>
+<body>
+    <main class="card">
+        <h1>成绩记录</h1>
+        <p class="sub">最高分保存在这台设备的浏览器里，游戏页和本页共用同一份数据。</p>
+
+        <div class="score empty" id="scoreBox">
+            <span class="label">历史最高分</span>
+            <span class="value" id="bestScore">暂无记录</span>
+        </div>
+        <p class="meta" id="status" aria-live="polite">先去玩一局，这里就会自动出现成绩。</p>
+
+        <div class="actions">
+            <a class="btn primary" href="index.html">回到游戏</a>
+            <button class="btn ghost" id="clearBtn" type="button" disabled>清空记录</button>
+        </div>
+
+        <p class="hint">
+            数据来自 <code>localStorage.snakeHighScore</code>。开着游戏标签页时，这里会自动同步最新成绩；清除浏览器数据会一并清掉这条记录。
+        </p>
+    </main>
+
+    <script>
+        (function () {
+            'use strict';
+
+            const KEY = 'snakeHighScore';
+            const scoreBox = document.getElementById('scoreBox');
+            const bestScore = document.getElementById('bestScore');
+            const status = document.getElementById('status');
+            const clearBtn = document.getElementById('clearBtn');
+
+            function readBest() {
+                const raw = localStorage.getItem(KEY);
+                if (raw === null) return null;
+                const value = Number(raw);
+                return Number.isFinite(value) && value > 0 ? value : null;
+            }
+
+            function render() {
+                const best = readBest();
+                if (best === null) {
+                    scoreBox.classList.add('empty');
+                    bestScore.textContent = '暂无记录';
+                    status.textContent = '先去玩一局，这里就会自动出现成绩。';
+                    clearBtn.disabled = true;
+                } else {
+                    scoreBox.classList.remove('empty');
+                    bestScore.textContent = best;
+                    status.textContent = '最高分已记录，再去挑战一次吧。';
+                    clearBtn.disabled = false;
+                }
+            }
+
+            clearBtn.addEventListener('click', function () {
+                if (!window.confirm('确定要清空最高分记录吗？该操作无法撤销。')) return;
+                localStorage.removeItem(KEY);
+                render();
+            });
+
+            // 游戏在别的标签页刷新了成绩时，本页跟着更新
+            window.addEventListener('storage', function (event) {
+                if (!event.key || event.key === KEY) render();
+            });
+
+            render();
+        })();
+    </script>
+</body>
+</html>
