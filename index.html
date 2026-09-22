@@ -26,7 +26,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 28px 16px 34px;
+            padding: 14px 14px 16px;
             color: var(--ink);
             font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
             background:
@@ -61,11 +61,11 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 16px;
+            gap: 12px;
         }
 
         .title {
-            font-size: clamp(2rem, 5.2vw, 3.3rem);
+            font-size: clamp(1.5rem, 3vw, 2.4rem);
             font-weight: 800;
             letter-spacing: .18em;
             text-align: center;
@@ -87,9 +87,9 @@
         }
 
         .subtitle {
-            margin-top: 8px;
+            margin-top: 6px;
             text-align: center;
-            font-size: .82rem;
+            font-size: .78rem;
             letter-spacing: .08em;
             color: var(--muted);
         }
@@ -102,8 +102,8 @@
         }
 
         .stat {
-            min-width: 108px;
-            padding: 9px 18px;
+            min-width: 96px;
+            padding: 7px 16px;
             text-align: center;
             border-radius: 14px;
             border: 1px solid rgba(255, 255, 255, .09);
@@ -122,7 +122,7 @@
         .stat .value {
             display: block;
             margin-top: 2px;
-            font-size: 1.45rem;
+            font-size: 1.3rem;
             font-weight: 700;
             font-variant-numeric: tabular-nums;
         }
@@ -142,7 +142,7 @@
 
         .board {
             position: relative;
-            width: min(600px, 86vw, 68vh);
+            width: min(1200px, 94vw, 74vh);
             aspect-ratio: 1 / 1;
             padding: 10px;
             border-radius: 24px;
@@ -350,10 +350,10 @@
         }
 
         .controls {
-            font-size: .84rem;
+            font-size: .78rem;
             color: var(--muted);
             text-align: center;
-            line-height: 2;
+            line-height: 1.8;
         }
 
         .controls .sep {
@@ -482,9 +482,11 @@
             const value3 = document.getElementById('value3');
 
             /* ---------------- 基础参数 ---------------- */
-            const SIZE = 600;                    // 逻辑画布边长（CSS 像素）
-            const gridSize = 30;                 // 每格像素
-            const tileCount = SIZE / gridSize;   // 20 × 20 格
+            const tileCount = 20;                // 逻辑格子数固定，棋盘尺寸随屏幕变化
+            let SIZE = 600;                      // 逻辑画布边长（CSS 像素）
+            let gridSize = SIZE / tileCount;     // 每格像素
+            let scaleK = 1;                      // 相对 600px 基准的缩放系数，用于等比调整光效
+            let boardReady = false;
             const START_SPEED = 130;             // 单人模式每步毫秒数，越小越快
             const MIN_SPEED = 65;
             const SPEED_STEP = 11;
@@ -508,12 +510,6 @@
                 p2:   { hue: 18,  spread: 52,  glow: 'rgba(255,150,70,0.95)',  head: ['#ffffff', '#ffc46b', '#ff5a2e'] }
             };
 
-            // 高分屏按设备像素比放大，画面更清晰
-            const dpr = Math.min(window.devicePixelRatio || 1, 2);
-            canvas.width = SIZE * dpr;
-            canvas.height = SIZE * dpr;
-            ctx.scale(dpr, dpr);
-
             /* ---------------- 游戏状态 ---------------- */
             let phase = 'menu';          // menu / playing / over
             let mode = 'solo';           // solo / versus
@@ -530,6 +526,8 @@
             let floaters = [];
             let startedAt = 0;
             let clockSecond = -1;
+            let roundStarted = false;    // 玩家按下第一个方向键后才真正开始移动
+            let waitingSnakes = [];      // 还没按键确认的蛇
             let highScore = readHighScore();
             let bestAtStart = highScore;
 
@@ -556,6 +554,23 @@
                 const m = Math.floor(seconds / 60);
                 const s = seconds % 60;
                 return m + ':' + (s < 10 ? '0' + s : s);
+            }
+
+            // 让棋盘铺满可用空间：按窗口尺寸重算逻辑尺寸，并按设备像素比提高分辨率
+            function resizeBoard() {
+                const rect = canvas.getBoundingClientRect();
+                const cssSize = Math.max(240, Math.round(Math.min(rect.width, rect.height)));
+                if (boardReady && cssSize === SIZE) return;
+
+                SIZE = cssSize;
+                gridSize = SIZE / tileCount;
+                scaleK = gridSize / 30;
+                boardReady = true;
+
+                const dpr = Math.min(window.devicePixelRatio || 1, 2);
+                canvas.width = Math.round(SIZE * dpr);
+                canvas.height = Math.round(SIZE * dpr);
+                ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
             }
 
             function readHighScore() {
@@ -612,7 +627,7 @@
             }
 
             function elapsedText() {
-                if (phase !== 'playing') return value3.dataset.lastClock || '0:00';
+                if (phase !== 'playing' || !roundStarted) return value3.dataset.lastClock || '0:00';
                 return formatClock(Math.max(0, Math.floor((Date.now() - startedAt) / 1000)));
             }
 
@@ -665,7 +680,8 @@
             function startRound(nextMode) {
                 mode = nextMode;
                 phase = 'playing';
-                startedAt = Date.now();
+                roundStarted = false;
+                startedAt = 0;
                 clockSecond = -1;
                 stepProgress = 0;
                 shake = 0;
@@ -688,6 +704,8 @@
                     setupFoods(1);
                 }
 
+                // 开局先不动：等玩家按下第一个方向键再出发，避免还没反应过来就被蛇带着走
+                waitingSnakes = mode === 'versus' ? [snakes[0], snakes[1]] : [snakes[0]];
                 value3.dataset.lastClock = '0:00';
                 startMenu.classList.remove('show');
                 gameOver.classList.remove('show');
@@ -702,6 +720,8 @@
             function showMenu() {
                 phase = 'menu';
                 stepProgress = 1;
+                roundStarted = false;
+                waitingSnakes = [];
                 snakes = [];
                 setupFoods(2);
                 startMenu.classList.add('show');
@@ -712,9 +732,25 @@
             /* ---------------- 输入 ---------------- */
             function setDirection(snake, dir) {
                 if (!snake || !snake.alive) return;
+
+                // 第一次按键即视为准备完成；对战时两位玩家都按过之后才一起出发
+                const pending = waitingSnakes.indexOf(snake);
+                if (pending >= 0) {
+                    waitingSnakes.splice(pending, 1);
+                    if (!waitingSnakes.length) beginMotion();
+                }
+
                 // 不允许 180° 掉头（以这一步实际行进的方向为准）
                 if (snake.dir.x === -dir.x && snake.dir.y === -dir.y) return;
                 snake.next = { x: dir.x, y: dir.y };
+            }
+
+            function beginMotion() {
+                if (roundStarted) return;
+                roundStarted = true;
+                startedAt = Date.now();
+                clockSecond = -1;
+                value3.dataset.lastClock = '0:00';
             }
 
             function tickClock() {
@@ -904,7 +940,7 @@
                         vy: Math.sin(angle) * power,
                         life: 0.5 + Math.random() * 0.5,
                         maxLife: 1,
-                        size: 1.6 + Math.random() * 3.2,
+                        size: (1.6 + Math.random() * 3.2) * scaleK,
                         hue: hue + (Math.random() * 50 - 25)
                     });
                 }
@@ -1030,7 +1066,7 @@
 
                     ctx.strokeStyle = 'hsla(' + hue + ', 92%, ' + light + '%, 0.96)';
                     ctx.shadowColor = 'hsla(' + hue + ', 100%, 62%, 0.9)';
-                    ctx.shadowBlur = snake.alive ? 16 : 0;
+                    ctx.shadowBlur = snake.alive ? 16 * scaleK : 0;
                     ctx.lineWidth = gridSize * (0.40 + 0.26 * toHead);
                     ctx.beginPath();
                     ctx.moveTo(from.x, from.y);
@@ -1067,7 +1103,7 @@
 
                 ctx.save();
                 ctx.shadowColor = snake.palette.glow;
-                ctx.shadowBlur = snake.alive ? 28 : 0;
+                ctx.shadowBlur = snake.alive ? 28 * scaleK : 0;
                 const glow = ctx.createRadialGradient(
                     head.x - radius * 0.3, head.y - radius * 0.35, radius * 0.12,
                     head.x, head.y, radius
@@ -1115,7 +1151,7 @@
                 ctx.rotate(animTime * 1.2 + hue);
                 ctx.setLineDash([5, 7]);
                 ctx.strokeStyle = 'hsla(' + hue + ', 100%, 72%, 0.6)';
-                ctx.lineWidth = 2;
+                ctx.lineWidth = 2 * scaleK;
                 ctx.beginPath();
                 ctx.arc(0, 0, gridSize * 0.72, 0, Math.PI * 2);
                 ctx.stroke();
@@ -1124,7 +1160,7 @@
                 // 果实本体：多层径向渐变 + 外发光
                 ctx.save();
                 ctx.shadowColor = 'hsla(' + hue + ', 100%, 60%, 0.95)';
-                ctx.shadowBlur = 26;
+                ctx.shadowBlur = 26 * scaleK;
                 const body = ctx.createRadialGradient(
                     center.x - radius * 0.35, center.y - radius * 0.4, radius * 0.1,
                     center.x, center.y, radius
@@ -1163,7 +1199,7 @@
                     const alpha = 0.3 + 0.7 * Math.abs(Math.sin(animTime * 3 + i));
                     ctx.fillStyle = 'hsla(' + hue + ', 100%, 92%, ' + alpha + ')';
                     ctx.beginPath();
-                    ctx.arc(sx, sy, 1.9, 0, Math.PI * 2);
+                    ctx.arc(sx, sy, 1.9 * scaleK, 0, Math.PI * 2);
                     ctx.fill();
                 }
             }
@@ -1173,7 +1209,7 @@
 
                 rings.forEach(r => {
                     ctx.strokeStyle = 'hsla(' + r.hue + ', 100%, 70%, ' + Math.max(0, r.life) * 0.8 + ')';
-                    ctx.lineWidth = 3;
+                    ctx.lineWidth = 3 * scaleK;
                     ctx.beginPath();
                     ctx.arc(r.x, r.y, r.r, 0, Math.PI * 2);
                     ctx.stroke();
@@ -1213,6 +1249,53 @@
                 drawEffects();
                 snakes.forEach(snake => drawSnake(snake, t));
                 foods.forEach(food => drawFood(food));
+                if (phase === 'playing' && !roundStarted) drawWaitingHint();
+                ctx.restore();
+            }
+
+            // 开局前盖在棋盘中央的提示：告诉玩家按下方向键才会开始移动
+            function drawWaitingHint() {
+                const cx = SIZE / 2;
+                // 放在偏上位置，避免挡住位于棋盘中央的初始蛇身
+                const cy = SIZE * 0.34;
+                const versus = mode === 'versus';
+                const bandHeight = SIZE * 0.26;
+
+                ctx.save();
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+
+                const band = ctx.createLinearGradient(0, cy - bandHeight / 2, 0, cy + bandHeight / 2);
+                band.addColorStop(0, 'rgba(6,9,20,0)');
+                band.addColorStop(0.5, 'rgba(6,9,20,0.8)');
+                band.addColorStop(1, 'rgba(6,9,20,0)');
+                ctx.fillStyle = band;
+                ctx.fillRect(0, cy - bandHeight / 2, SIZE, bandHeight);
+
+                ctx.font = '700 ' + Math.round(26 * scaleK) + 'px "Segoe UI", "PingFang SC", system-ui, sans-serif';
+                ctx.fillStyle = '#e8ecff';
+                ctx.shadowColor = 'rgba(126,241,255,0.7)';
+                ctx.shadowBlur = 20 * scaleK;
+                ctx.fillText(versus ? '双方各按一次方向键开始' : '按方向键开始', cx, cy - 18 * scaleK);
+                ctx.shadowBlur = 0;
+
+                ctx.font = '500 ' + Math.round(14 * scaleK) + 'px "Segoe UI", "PingFang SC", system-ui, sans-serif';
+                ctx.fillStyle = 'rgba(200,210,240,0.78)';
+                ctx.fillText(
+                    versus ? '玩家 1 用 WASD · 玩家 2 用方向键' : '方向键 或 WASD，按下后蛇才会移动',
+                    cx, cy + 14 * scaleK
+                );
+
+                if (versus) {
+                    const ready1 = snakes[0] && waitingSnakes.indexOf(snakes[0]) < 0;
+                    const ready2 = snakes[1] && waitingSnakes.indexOf(snakes[1]) < 0;
+                    ctx.font = '600 ' + Math.round(13 * scaleK) + 'px "Segoe UI", "PingFang SC", system-ui, sans-serif';
+                    ctx.fillStyle = ready1 ? '#7ef1ff' : 'rgba(160,170,200,0.65)';
+                    ctx.fillText('玩家 1 ' + (ready1 ? '已就绪' : '等待中'), cx - SIZE * 0.17, cy + 46 * scaleK);
+                    ctx.fillStyle = ready2 ? '#ffb066' : 'rgba(160,170,200,0.65)';
+                    ctx.fillText('玩家 2 ' + (ready2 ? '已就绪' : '等待中'), cx + SIZE * 0.17, cy + 46 * scaleK);
+                }
+
                 ctx.restore();
             }
 
@@ -1224,7 +1307,7 @@
 
                 updateEffects(dt);
 
-                if (phase === 'playing') {
+                if (phase === 'playing' && roundStarted) {
                     tickClock();
                     stepProgress += dt / speed;
                     while (stepProgress >= 1 && phase === 'playing') {
@@ -1287,6 +1370,8 @@
             window.restartRound = restartRound;
             window.showMenu = showMenu;
 
+            resizeBoard();
+            window.addEventListener('resize', resizeBoard);
             showMenu();
             requestAnimationFrame(gameLoop);
         })();
