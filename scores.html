@@ -14,9 +14,9 @@
         body {
             min-height: 100vh;
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             justify-content: center;
-            padding: 24px;
+            padding: 30px 16px 48px;
             color: #f0f0f0;
             font-family: 'Courier New', Courier, monospace;
             background: radial-gradient(circle at 50% 0%, #23233f 0%, #1a1a2e 55%, #12121f 100%);
@@ -24,13 +24,12 @@
 
         .card {
             width: 100%;
-            max-width: 460px;
-            padding: 32px 28px;
+            max-width: 720px;
+        }
+
+        .head {
+            margin-bottom: 22px;
             text-align: center;
-            border: 1px solid rgba(233, 69, 96, .35);
-            border-radius: 14px;
-            background: rgba(15, 15, 26, .75);
-            box-shadow: 0 24px 60px rgba(0, 0, 0, .5);
         }
 
         h1 {
@@ -41,44 +40,241 @@
 
         .sub {
             margin-top: 10px;
-            font-size: .82rem;
+            font-size: .8rem;
             line-height: 1.7;
             color: #9a9ab5;
         }
 
-        .score {
-            margin: 26px 0 10px;
-            padding: 20px;
-            border-radius: 12px;
-            border: 1px solid rgba(78, 204, 163, .25);
-            background: rgba(78, 204, 163, .08);
+        .summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+            margin-bottom: 24px;
         }
 
-        .score .label {
+        .sum {
+            padding: 14px 16px;
+            text-align: center;
+            border-radius: 12px;
+            border: 1px solid rgba(78, 204, 163, .22);
+            background: rgba(78, 204, 163, .07);
+        }
+
+        .sum .label {
             display: block;
-            font-size: .72rem;
-            letter-spacing: 3px;
+            font-size: .7rem;
+            letter-spacing: 2px;
             color: #9a9ab5;
         }
 
-        .score .value {
+        .sum .value {
             display: block;
             margin-top: 6px;
-            font-size: 2.6rem;
+            font-size: 1.7rem;
             font-weight: 700;
             color: #4ecca3;
-            text-shadow: 0 0 18px rgba(78, 204, 163, .45);
+            font-variant-numeric: tabular-nums;
         }
 
-        .score.empty .value {
-            font-size: 1.4rem;
+        .sum .value.small {
+            font-size: 1rem;
+            line-height: 1.9;
+            color: #f0f0f0;
+        }
+
+        .board-section {
+            margin-bottom: 26px;
+            padding: 18px;
+            border-radius: 14px;
+            border: 1px solid rgba(233, 69, 96, .3);
+            background: rgba(15, 15, 26, .72);
+            box-shadow: 0 18px 40px rgba(0, 0, 0, .35);
+        }
+
+        .section-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 14px;
+        }
+
+        .section-head h2 {
+            font-size: 1rem;
+            letter-spacing: 2px;
+            color: #e94560;
+        }
+
+        .section-head .hint {
+            font-size: .72rem;
             color: #6f6f8f;
-            text-shadow: none;
         }
 
-        .meta {
-            font-size: .78rem;
+        .filters {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .chip {
+            padding: 5px 14px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, .18);
+            background: transparent;
+            color: #c9c9e0;
+            font-family: inherit;
+            font-size: .76rem;
+            cursor: pointer;
+            transition: border-color .2s, color .2s, background-color .2s;
+        }
+
+        .chip:hover {
+            border-color: #4ecca3;
+            color: #fff;
+        }
+
+        .chip.active {
+            border-color: transparent;
+            background: #e94560;
+            color: #fff;
+        }
+
+        .timeline {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 420px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        .row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 12px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, .07);
+            background: rgba(255, 255, 255, .03);
+        }
+
+        .badge-mode {
+            flex: 0 0 auto;
+            padding: 3px 10px;
+            border-radius: 999px;
+            font-size: .68rem;
+            letter-spacing: 1px;
+        }
+
+        .badge-mode.solo {
+            color: #0d1b18;
+            background: #4ecca3;
+        }
+
+        .badge-mode.versus {
+            color: #2a1206;
+            background: #ffb066;
+        }
+
+        .row .when {
+            flex: 0 0 auto;
+            width: 132px;
+            font-size: .74rem;
             color: #9a9ab5;
+        }
+
+        .row .detail {
+            flex: 1 1 auto;
+            font-size: .84rem;
+            color: #f0f0f0;
+        }
+
+        .row .detail b {
+            color: #ffd166;
+        }
+
+        .row .detail .muted {
+            color: #8b8ba8;
+            font-size: .78rem;
+        }
+
+        .dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            margin-right: 4px;
+            border-radius: 50%;
+            vertical-align: middle;
+        }
+
+        .dot.p1 { background: #22d3ee; box-shadow: 0 0 8px rgba(34, 211, 238, .8); }
+        .dot.p2 { background: #ff8a3d; box-shadow: 0 0 8px rgba(255, 138, 61, .8); }
+
+        .board-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 420px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        .board-list li {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 9px 12px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, .03);
+            border: 1px solid rgba(255, 255, 255, .07);
+        }
+
+        .rank {
+            flex: 0 0 auto;
+            width: 34px;
+            height: 34px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            font-size: .82rem;
+            font-weight: 700;
+            background: rgba(255, 255, 255, .08);
+            color: #c9c9e0;
+        }
+
+        .rank.gold   { background: #ffd166; color: #3a2b06; box-shadow: 0 0 16px rgba(255, 209, 102, .5); }
+        .rank.silver { background: #d8dced; color: #23263a; }
+        .rank.bronze { background: #d29a6a; color: #33200f; }
+
+        .board-list .score {
+            flex: 0 0 auto;
+            min-width: 72px;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #4ecca3;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .board-list .meta {
+            flex: 1 1 auto;
+            font-size: .76rem;
+            color: #9a9ab5;
+        }
+
+        .board-list .when {
+            flex: 0 0 auto;
+            font-size: .72rem;
+            color: #6f6f8f;
+        }
+
+        .empty {
+            padding: 18px 12px;
+            text-align: center;
+            font-size: .82rem;
+            color: #6f6f8f;
         }
 
         .actions {
@@ -86,7 +282,6 @@
             gap: 10px;
             justify-content: center;
             flex-wrap: wrap;
-            margin: 24px 0 6px;
         }
 
         .btn {
@@ -127,10 +322,11 @@
             transform: none;
         }
 
-        .hint {
+        .foot {
             margin-top: 18px;
             font-size: .72rem;
-            line-height: 1.7;
+            line-height: 1.8;
+            text-align: center;
             color: #6f6f8f;
         }
 
@@ -141,22 +337,45 @@
 </head>
 <body>
     <main class="card">
-        <h1>成绩记录</h1>
-        <p class="sub">最高分保存在这台设备的浏览器里，游戏页和本页共用同一份数据。</p>
+        <header class="head">
+            <h1>成绩记录</h1>
+            <p class="sub">所有游玩记录都存在这台设备的浏览器里，游戏页与本页共用同一份数据。</p>
+        </header>
 
-        <div class="score empty" id="scoreBox">
-            <span class="label">历史最高分</span>
-            <span class="value" id="bestScore">暂无记录</span>
-        </div>
-        <p class="meta" id="status" aria-live="polite">先去玩一局，这里就会自动出现成绩。</p>
+        <section class="summary">
+            <div class="sum"><span class="label">总场次</span><span class="value" id="sumTotal">0</span></div>
+            <div class="sum"><span class="label">单人最高分</span><span class="value" id="sumBest">—</span></div>
+            <div class="sum"><span class="label">对战战绩</span><span class="value small" id="sumVersus">—</span></div>
+        </section>
+
+        <section class="board-section">
+            <div class="section-head">
+                <h2>记录明细</h2>
+                <div class="filters">
+                    <button class="chip active" type="button" data-filter="all">全部</button>
+                    <button class="chip" type="button" data-filter="solo">单人</button>
+                    <button class="chip" type="button" data-filter="versus">对战</button>
+                </div>
+            </div>
+            <div class="timeline" id="timeline"></div>
+        </section>
+
+        <section class="board-section">
+            <div class="section-head">
+                <h2>单人排行榜</h2>
+                <span class="hint">按分数从高到低</span>
+            </div>
+            <ol class="board-list" id="boardList"></ol>
+        </section>
 
         <div class="actions">
             <a class="btn primary" href="index.html">回到游戏</a>
             <button class="btn ghost" id="clearBtn" type="button" disabled>清空记录</button>
         </div>
 
-        <p class="hint">
-            数据来自 <code>localStorage.snakeHighScore</code>。开着游戏标签页时，这里会自动同步最新成绩；清除浏览器数据会一并清掉这条记录。
+        <p class="foot">
+            数据来自 <code>localStorage.snakeRecords</code>，最多保留最近 100 场；旧版只存过最高分时会读取 <code>localStorage.snakeHighScore</code>。
+            <br>清除浏览器数据会一并清掉这些记录。
         </p>
     </main>
 
@@ -164,43 +383,181 @@
         (function () {
             'use strict';
 
-            const KEY = 'snakeHighScore';
-            const scoreBox = document.getElementById('scoreBox');
-            const bestScore = document.getElementById('bestScore');
-            const status = document.getElementById('status');
-            const clearBtn = document.getElementById('clearBtn');
+            const RECORDS_KEY = 'snakeRecords';
+            const HIGH_SCORE_KEY = 'snakeHighScore';
+            const CAUSE_TEXT = {
+                wall: '撞墙',
+                self: '咬到自己',
+                other: '撞到对手',
+                'head-on': '正面相撞'
+            };
 
-            function readBest() {
-                const raw = localStorage.getItem(KEY);
-                if (raw === null) return null;
-                const value = Number(raw);
-                return Number.isFinite(value) && value > 0 ? value : null;
+            const timeline = document.getElementById('timeline');
+            const boardList = document.getElementById('boardList');
+            const sumTotal = document.getElementById('sumTotal');
+            const sumBest = document.getElementById('sumBest');
+            const sumVersus = document.getElementById('sumVersus');
+            const clearBtn = document.getElementById('clearBtn');
+            const chips = Array.prototype.slice.call(document.querySelectorAll('.chip'));
+
+            let filter = 'all';
+
+            function pad(value) {
+                return value < 10 ? '0' + value : String(value);
             }
 
-            function render() {
-                const best = readBest();
-                if (best === null) {
-                    scoreBox.classList.add('empty');
-                    bestScore.textContent = '暂无记录';
-                    status.textContent = '先去玩一局，这里就会自动出现成绩。';
-                    clearBtn.disabled = true;
-                } else {
-                    scoreBox.classList.remove('empty');
-                    bestScore.textContent = best;
-                    status.textContent = '最高分已记录，再去挑战一次吧。';
-                    clearBtn.disabled = false;
+            function formatWhen(timestamp) {
+                const d = new Date(timestamp);
+                if (isNaN(d.getTime())) return '未知时间';
+                return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) +
+                       ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+            }
+
+            function formatDuration(seconds) {
+                const s = Math.max(0, Math.round(Number(seconds) || 0));
+                return Math.floor(s / 60) + ':' + pad(s % 60);
+            }
+
+            function escapeHtml(text) {
+                return String(text).replace(/[&<>"]/g, c => ({
+                    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'
+                }[c]));
+            }
+
+            function loadRecords() {
+                let list = [];
+                try {
+                    const raw = localStorage.getItem(RECORDS_KEY);
+                    const parsed = raw ? JSON.parse(raw) : [];
+                    if (Array.isArray(parsed)) list = parsed;
+                } catch (e) {
+                    list = [];
+                }
+                return list.filter(r => r && (r.mode === 'solo' || r.mode === 'versus'))
+                           .sort((a, b) => (b.endedAt || 0) - (a.endedAt || 0));
+            }
+
+            function legacyHighScore() {
+                try {
+                    const value = Number(localStorage.getItem(HIGH_SCORE_KEY) || 0) || 0;
+                    return value > 0 ? value : null;
+                } catch (e) {
+                    return null;
                 }
             }
 
-            clearBtn.addEventListener('click', function () {
-                if (!window.confirm('确定要清空最高分记录吗？该操作无法撤销。')) return;
-                localStorage.removeItem(KEY);
+            function soloDetail(record) {
+                return '<b>' + record.score + '</b> 分' +
+                       ' <span class="muted">· 等级 ' + (record.level || 1) +
+                       ' · 蛇长 ' + (record.length || 0) +
+                       ' · 用时 ' + formatDuration(record.duration) + '</span>';
+            }
+
+            function versusDetail(record) {
+                const players = Array.isArray(record.players) ? record.players : [];
+                const p1 = players[0] || {};
+                const p2 = players[1] || {};
+                const winner = record.winner === 1 ? '玩家 1 胜'
+                             : record.winner === 2 ? '玩家 2 胜'
+                             : '平局';
+                const causeOf = record.winner === 1 ? p2.cause : p1.cause;
+                const causeText = CAUSE_TEXT[causeOf] ? '（' + CAUSE_TEXT[causeOf] + '）' : '';
+                return '<b>' + escapeHtml(winner) + '</b>' + escapeHtml(causeText) +
+                       ' <span class="muted">· <span class="dot p1"></span>' + (p1.score || 0) + ' : ' +
+                       (p2.score || 0) + '<span class="dot p2"></span>' +
+                       ' · 用时 ' + formatDuration(record.duration) + '</span>';
+            }
+
+            function renderSummary(list) {
+                const solos = list.filter(r => r.mode === 'solo');
+                const duels = list.filter(r => r.mode === 'versus');
+                const best = solos.reduce((max, r) => Math.max(max, Number(r.score) || 0), 0);
+                const legacy = legacyHighScore();
+
+                sumTotal.textContent = list.length;
+                sumBest.textContent = solos.length ? best : (legacy !== null ? legacy + '' : '—');
+
+                if (!duels.length) {
+                    sumVersus.textContent = '暂无对战';
+                } else {
+                    const p1Wins = duels.filter(r => r.winner === 1).length;
+                    const p2Wins = duels.filter(r => r.winner === 2).length;
+                    const draws = duels.length - p1Wins - p2Wins;
+                    sumVersus.innerHTML =
+                        '<span class="dot p1"></span>' + p1Wins + ' 胜 · ' +
+                        '<span class="dot p2"></span>' + p2Wins + ' 胜 · 平 ' + draws;
+                }
+            }
+
+            function renderTimeline(list) {
+                const shown = list.filter(r => filter === 'all' || r.mode === filter);
+                if (!shown.length) {
+                    const legacy = legacyHighScore();
+                    timeline.innerHTML = '<p class="empty">' +
+                        (list.length ? '这个筛选下还没有记录。'
+                                     : '还没有记录，先去玩一局吧。' +
+                                       (legacy !== null ? '<br>检测到旧版最高分：' + legacy + ' 分（开始新对局后会被记入榜单）' : '')) +
+                        '</p>';
+                    return;
+                }
+                timeline.innerHTML = shown.map(record => {
+                    const isSolo = record.mode === 'solo';
+                    return '<div class="row">' +
+                        '<span class="badge-mode ' + (isSolo ? 'solo' : 'versus') + '">' + (isSolo ? '单人' : '对战') + '</span>' +
+                        '<span class="when">' + escapeHtml(formatWhen(record.endedAt)) + '</span>' +
+                        '<span class="detail">' + (isSolo ? soloDetail(record) : versusDetail(record)) + '</span>' +
+                        '</div>';
+                }).join('');
+            }
+
+            function renderBoard(list) {
+                const solos = list.filter(r => r.mode === 'solo')
+                                  .sort((a, b) => (Number(b.score) || 0) - (Number(a.score) || 0)
+                                               || (a.endedAt || 0) - (b.endedAt || 0));
+                if (!solos.length) {
+                    boardList.innerHTML = '<p class="empty">还没有单人成绩，去挑战一次吧。</p>';
+                    return;
+                }
+                boardList.innerHTML = solos.map((record, index) => {
+                    const cls = index === 0 ? 'gold' : index === 1 ? 'silver' : index === 2 ? 'bronze' : '';
+                    return '<li>' +
+                        '<span class="rank ' + cls + '">' + (index + 1) + '</span>' +
+                        '<span class="score">' + (Number(record.score) || 0) + '</span>' +
+                        '<span class="meta">等级 ' + (record.level || 1) + ' · 蛇长 ' + (record.length || 0) +
+                        ' · 用时 ' + formatDuration(record.duration) + '</span>' +
+                        '<span class="when">' + escapeHtml(formatWhen(record.endedAt)) + '</span>' +
+                        '</li>';
+                }).join('');
+            }
+
+            function render() {
+                const list = loadRecords();
+                renderSummary(list);
+                renderTimeline(list);
+                renderBoard(list);
+                clearBtn.disabled = list.length === 0 && legacyHighScore() === null;
+            }
+
+            chips.forEach(chip => {
+                chip.addEventListener('click', () => {
+                    filter = chip.dataset.filter;
+                    chips.forEach(c => c.classList.toggle('active', c === chip));
+                    render();
+                });
+            });
+
+            clearBtn.addEventListener('click', () => {
+                if (!window.confirm('确定要清空全部游玩记录吗？该操作无法撤销。')) return;
+                try {
+                    localStorage.removeItem(RECORDS_KEY);
+                    localStorage.removeItem(HIGH_SCORE_KEY);
+                } catch (e) { /* 忽略隐私模式下的失败 */ }
                 render();
             });
 
-            // 游戏在别的标签页刷新了成绩时，本页跟着更新
-            window.addEventListener('storage', function (event) {
-                if (!event.key || event.key === KEY) render();
+            // 游戏在别的标签页刷新了记录时，本页跟着更新
+            window.addEventListener('storage', event => {
+                if (!event.key || event.key === RECORDS_KEY || event.key === HIGH_SCORE_KEY) render();
             });
 
             render();
