@@ -245,6 +245,7 @@
         }
 
         .btn {
+            display: inline-block;
             padding: 12px 36px;
             border: none;
             border-radius: 999px;
@@ -254,6 +255,8 @@
             letter-spacing: .1em;
             color: #fff;
             cursor: pointer;
+            text-align: center;
+            text-decoration: none;
             background: linear-gradient(135deg, var(--cyan), var(--violet) 55%, var(--pink));
             box-shadow: 0 12px 28px rgba(139, 92, 246, .45);
             transition: transform .2s ease, box-shadow .2s ease;
@@ -268,11 +271,49 @@
             transform: translateY(0) scale(.98);
         }
 
+        .btn.ghost {
+            border: 1px solid rgba(255, 255, 255, .22);
+            background: transparent;
+            color: var(--ink);
+            box-shadow: none;
+        }
+
+        .btn.ghost:hover {
+            border-color: var(--cyan);
+            color: #fff;
+            box-shadow: 0 0 24px rgba(34, 211, 238, .35);
+        }
+
+        .panel-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
         .controls {
             font-size: .84rem;
             color: var(--muted);
             text-align: center;
             line-height: 2;
+        }
+
+        .controls .sep {
+            margin: 0 8px;
+            color: rgba(255, 255, 255, .22);
+        }
+
+        .controls a {
+            padding-bottom: 1px;
+            color: #7ef1ff;
+            text-decoration: none;
+            border-bottom: 1px solid rgba(126, 241, 255, .35);
+            transition: color .2s ease, border-color .2s ease;
+        }
+
+        .controls a:hover {
+            color: #fff;
+            border-color: #fff;
         }
 
         kbd {
@@ -317,7 +358,10 @@
                     <span class="badge" id="recordBadge">NEW RECORD</span>
                     <h2>GAME OVER</h2>
                     <p class="final">本局得分 <span id="finalScore">0</span></p>
-                    <button class="btn" onclick="resetGame()">再来一局</button>
+                    <div class="panel-actions">
+                        <button class="btn" onclick="resetGame()">再来一局</button>
+                        <a class="btn ghost" href="scores.html">查看成绩记录</a>
+                    </div>
                     <p class="tip">或按 <kbd>Enter</kbd> 快速重开</p>
                 </div>
             </div>
@@ -325,6 +369,8 @@
 
         <p class="controls">
             <kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd> 或 <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 控制方向
+            <span class="sep">·</span>
+            <a href="scores.html">查看成绩记录 →</a>
         </p>
     </main>
 
