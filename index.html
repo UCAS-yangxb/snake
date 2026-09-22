@@ -22,18 +22,18 @@
         }
 
         body {
-            min-height: 100vh;
+            height: 100vh;
             display: flex;
-            align-items: center;
+            align-items: stretch;
             justify-content: center;
-            padding: 14px 14px 16px;
+            padding: 10px 12px 12px;
             color: var(--ink);
             font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
             background:
                 radial-gradient(1100px 780px at 12% 8%, #17204a 0%, transparent 62%),
                 radial-gradient(980px 720px at 88% 92%, #3a0f3d 0%, transparent 60%),
                 linear-gradient(160deg, #05060f 0%, #0b0f24 55%, #060812 100%);
-            overflow-x: hidden;
+            overflow: hidden;
         }
 
         /* 背景里缓慢漂移的极光光斑 */
@@ -61,7 +61,10 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
+            width: 100%;
+            max-width: 1800px;
+            height: 100%;
         }
 
         .title {
@@ -142,10 +145,11 @@
 
         .board {
             position: relative;
-            width: min(1200px, 94vw, 74vh);
-            aspect-ratio: 1 / 1;
-            padding: 10px;
-            border-radius: 24px;
+            flex: 1 1 auto;
+            width: 100%;
+            min-height: 240px;
+            padding: 8px;
+            border-radius: 20px;
             background: linear-gradient(145deg, rgba(34, 211, 238, .38), rgba(139, 92, 246, .38), rgba(255, 46, 99, .38));
             box-shadow: 0 26px 60px rgba(0, 0, 0, .55), 0 0 70px rgba(80, 120, 255, .16);
             animation: boardIn .85s ease both;
@@ -166,7 +170,7 @@
 
         .overlay {
             position: absolute;
-            inset: 10px;
+            inset: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -482,10 +486,15 @@
             const value3 = document.getElementById('value3');
 
             /* ---------------- 基础参数 ---------------- */
-            const tileCount = 20;                // 逻辑格子数固定，棋盘尺寸随屏幕变化
-            let SIZE = 600;                      // 逻辑画布边长（CSS 像素）
-            let gridSize = SIZE / tileCount;     // 每格像素
-            let scaleK = 1;                      // 相对 600px 基准的缩放系数，用于等比调整光效
+            const MIN_TILES = 20;                // 短边至少 20 格，长边按窗口比例延伸成长方形
+            let cols = 20;                       // 横向格数
+            let rows = 20;                       // 纵向格数
+            let cell = 30;                       // 每格像素
+            let offX = 0;                        // 网格在画布内的水平居中偏移
+            let offY = 0;                        // 网格在画布内的垂直居中偏移
+            let boardW = 600;                    // 画布逻辑宽度
+            let boardH = 600;                    // 画布逻辑高度
+            let scaleK = 1;                      // 相对 30px 格子的缩放系数，用于等比调整光效
             let boardReady = false;
             const START_SPEED = 130;             // 单人模式每步毫秒数，越小越快
             const MIN_SPEED = 65;
@@ -543,10 +552,10 @@
                 element.classList.add('bump');
             }
 
-            function cellCenter(cell) {
+            function cellCenter(pos) {
                 return {
-                    x: cell.x * gridSize + gridSize / 2,
-                    y: cell.y * gridSize + gridSize / 2
+                    x: offX + pos.x * cell + cell / 2,
+                    y: offY + pos.y * cell + cell / 2
                 };
             }
 
@@ -556,20 +565,33 @@
                 return m + ':' + (s < 10 ? '0' + s : s);
             }
 
-            // 让棋盘铺满可用空间：按窗口尺寸重算逻辑尺寸，并按设备像素比提高分辨率
-            function resizeBoard() {
+            // 让棋盘铺满窗口：短边固定 MIN_TILES 格，长边按窗口比例延伸成长方形
+            function resizeBoard(reshape) {
                 const rect = canvas.getBoundingClientRect();
-                const cssSize = Math.max(240, Math.round(Math.min(rect.width, rect.height)));
-                if (boardReady && cssSize === SIZE) return;
+                const w = Math.max(320, Math.round(rect.width));
+                const h = Math.max(240, Math.round(rect.height));
+                if (boardReady && w === boardW && h === boardH && !reshape) return;
 
-                SIZE = cssSize;
-                gridSize = SIZE / tileCount;
-                scaleK = gridSize / 30;
+                boardW = w;
+                boardH = h;
+
+                // 对局进行中只缩放不重排格数，避免蛇的位置被瞬移
+                if (reshape || !boardReady || phase !== 'playing') {
+                    cell = Math.min(w, h) / MIN_TILES;
+                    cols = Math.max(MIN_TILES, Math.floor(w / cell));
+                    rows = Math.max(MIN_TILES, Math.floor(h / cell));
+                } else {
+                    cell = Math.min(w / cols, h / rows);
+                }
+
+                offX = (w - cols * cell) / 2;
+                offY = (h - rows * cell) / 2;
+                scaleK = cell / 30;
                 boardReady = true;
 
                 const dpr = Math.min(window.devicePixelRatio || 1, 2);
-                canvas.width = Math.round(SIZE * dpr);
-                canvas.height = Math.round(SIZE * dpr);
+                canvas.width = Math.round(w * dpr);
+                canvas.height = Math.round(h * dpr);
                 ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
             }
 
@@ -656,8 +678,8 @@
             function freeCells() {
                 const occupied = occupiedCells();
                 const free = [];
-                for (let x = 0; x < tileCount; x++) {
-                    for (let y = 0; y < tileCount; y++) {
+                for (let x = 0; x < cols; x++) {
+                    for (let y = 0; y < rows; y++) {
                         if (!occupied.has(x + ',' + y)) free.push({ x: x, y: y });
                     }
                 }
@@ -680,6 +702,7 @@
             function startRound(nextMode) {
                 mode = nextMode;
                 phase = 'playing';
+                resizeBoard(true);       // 每局开始时按当前窗口重新排布格子
                 roundStarted = false;
                 startedAt = 0;
                 clockSecond = -1;
@@ -691,17 +714,23 @@
                 bestAtStart = highScore;
                 soloLevel = 1;
 
+                const midRow = Math.floor(rows / 2);
+                const midCol = Math.floor(cols / 2);
+                const area = cols * rows;
+
                 if (mode === 'versus') {
+                    const gap = Math.max(3, Math.min(6, Math.floor(cols / 8)));
                     snakes = [
-                        makeSnake('玩家 1', [{ x: 6, y: 10 }, { x: 5, y: 10 }, { x: 4, y: 10 }], { x: 1, y: 0 }, PALETTES.p1),
-                        makeSnake('玩家 2', [{ x: 13, y: 10 }, { x: 14, y: 10 }, { x: 15, y: 10 }], { x: -1, y: 0 }, PALETTES.p2)
+                        makeSnake('玩家 1', [{ x: midCol - gap, y: midRow }, { x: midCol - gap - 1, y: midRow }, { x: midCol - gap - 2, y: midRow }], { x: 1, y: 0 }, PALETTES.p1),
+                        makeSnake('玩家 2', [{ x: midCol + gap, y: midRow }, { x: midCol + gap + 1, y: midRow }, { x: midCol + gap + 2, y: midRow }], { x: -1, y: 0 }, PALETTES.p2)
                     ];
                     speed = VERSUS_SPEED;
-                    setupFoods(3);
+                    // 棋盘越大，食物越多，避免在空旷的长方形地图里到处找不到吃的
+                    setupFoods(Math.max(3, Math.round(area / 200)));
                 } else {
-                    snakes = [makeSnake('玩家', [{ x: 10, y: 10 }, { x: 9, y: 10 }, { x: 8, y: 10 }], { x: 1, y: 0 }, PALETTES.solo)];
+                    snakes = [makeSnake('玩家', [{ x: midCol, y: midRow }, { x: midCol - 1, y: midRow }, { x: midCol - 2, y: midRow }], { x: 1, y: 0 }, PALETTES.solo)];
                     speed = START_SPEED;
-                    setupFoods(1);
+                    setupFoods(Math.max(1, Math.round(area / 400)));
                 }
 
                 // 开局先不动：等玩家按下第一个方向键再出发，避免还没反应过来就被蛇带着走
@@ -798,7 +827,7 @@
                 const deaths = new Map();
                 active.forEach(s => {
                     const head = heads.get(s);
-                    if (head.x < 0 || head.x >= tileCount || head.y < 0 || head.y >= tileCount) {
+                    if (head.x < 0 || head.x >= cols || head.y < 0 || head.y >= rows) {
                         deaths.set(s, 'wall');
                         return;
                     }
@@ -846,7 +875,7 @@
             function onEat(snake, food) {
                 const pos = cellCenter(food);
                 floaters.push({ x: pos.x, y: pos.y, text: '+10', life: 1, hue: food.hue });
-                rings.push({ x: pos.x, y: pos.y, r: gridSize * 0.4, maxR: gridSize * 2.6, life: 1, hue: food.hue });
+                rings.push({ x: pos.x, y: pos.y, r: cell * 0.4, maxR: cell * 2.6, life: 1, hue: food.hue });
                 spawnBurst(pos, 20, food.hue);
 
                 if (mode === 'solo') {
@@ -859,9 +888,9 @@
                     if (nextLevel !== soloLevel) {
                         soloLevel = nextLevel;
                         bump(levelCard);
-                        const center = { x: SIZE / 2, y: SIZE / 2 };
+                        const center = { x: offX + cols * cell / 2, y: offY + rows * cell / 2 };
                         floaters.push({ x: center.x, y: center.y, text: 'LEVEL ' + soloLevel, life: 1.35, hue: 285 });
-                        rings.push({ x: center.x, y: center.y, r: gridSize, maxR: SIZE * 0.7, life: 1, hue: 285 });
+                        rings.push({ x: center.x, y: center.y, r: cell, maxR: Math.max(cols, rows) * cell * 0.5, life: 1, hue: 285 });
                     }
                     speed = Math.max(MIN_SPEED, START_SPEED - (soloLevel - 1) * SPEED_STEP);
                 }
@@ -982,53 +1011,69 @@
 
             /* ---------------- 绘制 ---------------- */
             function drawBackground() {
-                const gradient = ctx.createLinearGradient(0, 0, SIZE, SIZE);
+                const gridW = cols * cell;
+                const gridH = rows * cell;
+                const gx = offX + gridW / 2;
+                const gy = offY + gridH / 2;
+
+                const gradient = ctx.createLinearGradient(0, 0, boardW, boardH);
                 gradient.addColorStop(0, '#070a18');
                 gradient.addColorStop(0.5, '#0a0f26');
                 gradient.addColorStop(1, '#0c0722');
                 ctx.fillStyle = gradient;
-                ctx.fillRect(0, 0, SIZE, SIZE);
+                ctx.fillRect(0, 0, boardW, boardH);
 
                 // 中央缓缓呼吸的光晕
                 const breathe = 0.1 + 0.035 * Math.sin(animTime * 0.9);
-                const halo = ctx.createRadialGradient(SIZE / 2, SIZE / 2, 40, SIZE / 2, SIZE / 2, SIZE * 0.78);
+                const halo = ctx.createRadialGradient(gx, gy, 40, gx, gy, Math.max(boardW, boardH) * 0.6);
                 halo.addColorStop(0, 'rgba(96,132,255,' + breathe + ')');
                 halo.addColorStop(1, 'rgba(0,0,0,0)');
                 ctx.fillStyle = halo;
-                ctx.fillRect(0, 0, SIZE, SIZE);
+                ctx.fillRect(0, 0, boardW, boardH);
 
-                // 网格
+                // 网格：按实际格数与居中偏移绘制
                 ctx.lineWidth = 1;
                 ctx.strokeStyle = 'rgba(150,180,255,0.06)';
                 ctx.beginPath();
-                for (let i = 1; i < tileCount; i++) {
-                    const p = i * gridSize;
-                    ctx.moveTo(p, 0);
-                    ctx.lineTo(p, SIZE);
-                    ctx.moveTo(0, p);
-                    ctx.lineTo(SIZE, p);
+                for (let i = 1; i < cols; i++) {
+                    const p = offX + i * cell;
+                    ctx.moveTo(p, offY);
+                    ctx.lineTo(p, offY + gridH);
+                }
+                for (let j = 1; j < rows; j++) {
+                    const p = offY + j * cell;
+                    ctx.moveTo(offX, p);
+                    ctx.lineTo(offX + gridW, p);
                 }
                 ctx.stroke();
 
                 ctx.strokeStyle = 'rgba(150,180,255,0.13)';
                 ctx.beginPath();
-                for (let i = 5; i < tileCount; i += 5) {
-                    const p = i * gridSize;
-                    ctx.moveTo(p, 0);
-                    ctx.lineTo(p, SIZE);
-                    ctx.moveTo(0, p);
-                    ctx.lineTo(SIZE, p);
+                for (let i = 5; i < cols; i += 5) {
+                    const p = offX + i * cell;
+                    ctx.moveTo(p, offY);
+                    ctx.lineTo(p, offY + gridH);
+                }
+                for (let j = 5; j < rows; j += 5) {
+                    const p = offY + j * cell;
+                    ctx.moveTo(offX, p);
+                    ctx.lineTo(offX + gridW, p);
                 }
                 ctx.stroke();
 
+                // 活动区域外框，让长方形边界更清楚
+                ctx.strokeStyle = 'rgba(150,180,255,0.2)';
+                ctx.lineWidth = 1;
+                ctx.strokeRect(offX + 0.5, offY + 0.5, gridW - 1, gridH - 1);
+
                 // 自上而下缓缓扫过的光带
-                const bandY = ((animTime * 95) % (SIZE + 260)) - 130;
+                const bandY = offY + ((animTime * 95) % (gridH + 260)) - 130;
                 const band = ctx.createLinearGradient(0, bandY - 90, 0, bandY + 90);
                 band.addColorStop(0, 'rgba(120,255,255,0)');
                 band.addColorStop(0.5, 'rgba(120,255,255,0.055)');
                 band.addColorStop(1, 'rgba(120,255,255,0)');
                 ctx.fillStyle = band;
-                ctx.fillRect(0, bandY - 90, SIZE, 180);
+                ctx.fillRect(offX, bandY - 90, gridW, 180);
             }
 
             function snakePoints(snake, t) {
@@ -1039,8 +1084,8 @@
                         ? snake.prev[i]
                         : snake.prev[snake.prev.length - 1] || current;
                     points.push({
-                        x: (previous.x + (current.x - previous.x) * t) * gridSize + gridSize / 2,
-                        y: (previous.y + (current.y - previous.y) * t) * gridSize + gridSize / 2
+                        x: offX + (previous.x + (current.x - previous.x) * t) * cell + cell / 2,
+                        y: offY + (previous.y + (current.y - previous.y) * t) * cell + cell / 2
                     });
                 }
                 return points;
@@ -1067,7 +1112,7 @@
                     ctx.strokeStyle = 'hsla(' + hue + ', 92%, ' + light + '%, 0.96)';
                     ctx.shadowColor = 'hsla(' + hue + ', 100%, 62%, 0.9)';
                     ctx.shadowBlur = snake.alive ? 16 * scaleK : 0;
-                    ctx.lineWidth = gridSize * (0.40 + 0.26 * toHead);
+                    ctx.lineWidth = cell * (0.40 + 0.26 * toHead);
                     ctx.beginPath();
                     ctx.moveTo(from.x, from.y);
                     ctx.lineTo(to.x, to.y);
@@ -1077,7 +1122,7 @@
                 // 背部高光，让身体有立体感
                 ctx.shadowBlur = 0;
                 ctx.strokeStyle = 'rgba(255,255,255,0.16)';
-                ctx.lineWidth = gridSize * 0.14;
+                ctx.lineWidth = cell * 0.14;
                 ctx.beginPath();
                 ctx.moveTo(points[total - 1].x, points[total - 1].y);
                 for (let i = total - 2; i >= 0; i--) {
@@ -1092,13 +1137,13 @@
             function drawHead(points, snake) {
                 const head = points[0];
                 const behind = points[1] || {
-                    x: head.x - snake.dir.x * gridSize,
-                    y: head.y - snake.dir.y * gridSize
+                    x: head.x - snake.dir.x * cell,
+                    y: head.y - snake.dir.y * cell
                 };
                 const dir = unit(head.x - behind.x, head.y - behind.y);
                 const side = { x: -dir.y, y: dir.x };
                 const pulse = 1 + 0.05 * Math.sin(animTime * 7);
-                const radius = gridSize * 0.47 * pulse;
+                const radius = cell * 0.47 * pulse;
                 const head3 = snake.palette.head;
 
                 ctx.save();
@@ -1118,10 +1163,10 @@
                 ctx.restore();
 
                 // 眼睛：深色瞳孔 + 白点高光，朝行进方向偏移
-                const eyeR = gridSize * 0.105;
-                const sep = gridSize * 0.2;
-                const ox = head.x + dir.x * gridSize * 0.12;
-                const oy = head.y + dir.y * gridSize * 0.12;
+                const eyeR = cell * 0.105;
+                const sep = cell * 0.2;
+                const ox = head.x + dir.x * cell * 0.12;
+                const oy = head.y + dir.y * cell * 0.12;
 
                 for (const sign of [1, -1]) {
                     const ex = ox + side.x * sep * sign;
@@ -1143,7 +1188,7 @@
                 const center = cellCenter(food);
                 const hue = food.hue;
                 const pulse = 1 + 0.12 * Math.sin(animTime * 5.5 + hue);
-                const radius = gridSize * 0.36 * pulse;
+                const radius = cell * 0.36 * pulse;
 
                 // 旋转的虚线光环
                 ctx.save();
@@ -1153,7 +1198,7 @@
                 ctx.strokeStyle = 'hsla(' + hue + ', 100%, 72%, 0.6)';
                 ctx.lineWidth = 2 * scaleK;
                 ctx.beginPath();
-                ctx.arc(0, 0, gridSize * 0.72, 0, Math.PI * 2);
+                ctx.arc(0, 0, cell * 0.72, 0, Math.PI * 2);
                 ctx.stroke();
                 ctx.restore();
 
@@ -1187,15 +1232,15 @@
                 ctx.rotate(Math.sin(animTime * 2 + hue) * 0.25 - 0.4);
                 ctx.fillStyle = '#7ef29d';
                 ctx.beginPath();
-                ctx.ellipse(0, 0, gridSize * 0.17, gridSize * 0.075, 0, 0, Math.PI * 2);
+                ctx.ellipse(0, 0, cell * 0.17, cell * 0.075, 0, 0, Math.PI * 2);
                 ctx.fill();
                 ctx.restore();
 
                 // 环绕的小亮点
                 for (let i = 0; i < 3; i++) {
                     const angle = animTime * 2 + i * Math.PI * 2 / 3 + hue;
-                    const sx = center.x + Math.cos(angle) * gridSize * 0.92;
-                    const sy = center.y + Math.sin(angle) * gridSize * 0.5;
+                    const sx = center.x + Math.cos(angle) * cell * 0.92;
+                    const sy = center.y + Math.sin(angle) * cell * 0.5;
                     const alpha = 0.3 + 0.7 * Math.abs(Math.sin(animTime * 3 + i));
                     ctx.fillStyle = 'hsla(' + hue + ', 100%, 92%, ' + alpha + ')';
                     ctx.beginPath();
@@ -1223,7 +1268,7 @@
                     ctx.fill();
                 });
 
-                ctx.font = '700 ' + Math.round(gridSize * 0.8) + 'px "Segoe UI", system-ui, sans-serif';
+                ctx.font = '700 ' + Math.round(cell * 0.8) + 'px "Segoe UI", system-ui, sans-serif';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
                 floaters.forEach(f => {
@@ -1255,11 +1300,13 @@
 
             // 开局前盖在棋盘中央的提示：告诉玩家按下方向键才会开始移动
             function drawWaitingHint() {
-                const cx = SIZE / 2;
+                const gridW = cols * cell;
+                const gridH = rows * cell;
+                const cx = offX + gridW / 2;
                 // 放在偏上位置，避免挡住位于棋盘中央的初始蛇身
-                const cy = SIZE * 0.34;
+                const cy = offY + gridH * 0.34;
                 const versus = mode === 'versus';
-                const bandHeight = SIZE * 0.26;
+                const bandHeight = gridH * 0.26;
 
                 ctx.save();
                 ctx.textAlign = 'center';
@@ -1270,7 +1317,7 @@
                 band.addColorStop(0.5, 'rgba(6,9,20,0.8)');
                 band.addColorStop(1, 'rgba(6,9,20,0)');
                 ctx.fillStyle = band;
-                ctx.fillRect(0, cy - bandHeight / 2, SIZE, bandHeight);
+                ctx.fillRect(offX, cy - bandHeight / 2, gridW, bandHeight);
 
                 ctx.font = '700 ' + Math.round(26 * scaleK) + 'px "Segoe UI", "PingFang SC", system-ui, sans-serif';
                 ctx.fillStyle = '#e8ecff';
@@ -1291,9 +1338,9 @@
                     const ready2 = snakes[1] && waitingSnakes.indexOf(snakes[1]) < 0;
                     ctx.font = '600 ' + Math.round(13 * scaleK) + 'px "Segoe UI", "PingFang SC", system-ui, sans-serif';
                     ctx.fillStyle = ready1 ? '#7ef1ff' : 'rgba(160,170,200,0.65)';
-                    ctx.fillText('玩家 1 ' + (ready1 ? '已就绪' : '等待中'), cx - SIZE * 0.17, cy + 46 * scaleK);
+                    ctx.fillText('玩家 1 ' + (ready1 ? '已就绪' : '等待中'), cx - gridW * 0.17, cy + 46 * scaleK);
                     ctx.fillStyle = ready2 ? '#ffb066' : 'rgba(160,170,200,0.65)';
-                    ctx.fillText('玩家 2 ' + (ready2 ? '已就绪' : '等待中'), cx + SIZE * 0.17, cy + 46 * scaleK);
+                    ctx.fillText('玩家 2 ' + (ready2 ? '已就绪' : '等待中'), cx + gridW * 0.17, cy + 46 * scaleK);
                 }
 
                 ctx.restore();
@@ -1370,8 +1417,8 @@
             window.restartRound = restartRound;
             window.showMenu = showMenu;
 
-            resizeBoard();
-            window.addEventListener('resize', resizeBoard);
+            resizeBoard(true);
+            window.addEventListener('resize', function () { resizeBoard(false); });
             showMenu();
             requestAnimationFrame(gameLoop);
         })();
